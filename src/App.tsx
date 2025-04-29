@@ -1,7 +1,7 @@
 
 import { useState } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
-import { ChevronDown, ChevronUp, CheckCircle } from 'lucide-react'
+import { ChevronDown, ChevronUp } from 'lucide-react'
 import { Button } from './components/ui/button'
 import { Progress } from './components/ui/progress'
 import './App.css'
@@ -36,98 +36,29 @@ function App() {
   const [currentQuestionIndex, setCurrentQuestionIndex] = useState(0)
   const [answers, setAnswers] = useState<Record<number, string>>({})
   const [textInput, setTextInput] = useState('')
-  const [isCompleted, setIsCompleted] = useState(false)
 
   const currentQuestion = sampleQuestions[currentQuestionIndex]
-  const progress = isCompleted ? 100 : ((currentQuestionIndex) / sampleQuestions.length) * 100
+  const progress = ((currentQuestionIndex) / sampleQuestions.length) * 100
 
   const handleNext = () => {
     if (textInput.trim()) {
       setAnswers(prev => ({ ...prev, [currentQuestion.id]: textInput }))
       setTextInput('')
-      if (currentQuestionIndex === sampleQuestions.length - 1) {
-        setIsCompleted(true)
-      } else {
-        setCurrentQuestionIndex(prev => prev + 1)
-      }
+      setCurrentQuestionIndex(prev => Math.min(prev + 1, sampleQuestions.length - 1))
     }
   }
 
   const handlePrevious = () => {
-    if (isCompleted) {
-      setIsCompleted(false)
-      setCurrentQuestionIndex(sampleQuestions.length - 1)
-      const previousAnswer = answers[sampleQuestions[sampleQuestions.length - 1].id]
-      if (previousAnswer) {
-        setTextInput(previousAnswer)
-      }
-    } else {
-      setCurrentQuestionIndex(prev => Math.max(prev - 1, 0))
-      const previousAnswer = answers[sampleQuestions[currentQuestionIndex - 1]?.id]
-      if (previousAnswer) {
-        setTextInput(previousAnswer)
-      }
+    setCurrentQuestionIndex(prev => Math.max(prev - 1, 0))
+    const previousAnswer = answers[sampleQuestions[currentQuestionIndex - 1]?.id]
+    if (previousAnswer) {
+      setTextInput(previousAnswer)
     }
   }
 
   const handleChoice = (choice: string) => {
     setAnswers(prev => ({ ...prev, [currentQuestion.id]: choice }))
-    if (currentQuestionIndex === sampleQuestions.length - 1) {
-      setIsCompleted(true)
-    } else {
-      setCurrentQuestionIndex(prev => prev + 1)
-    }
-  }
-
-  const handleReset = () => {
-    setCurrentQuestionIndex(0)
-    setAnswers({})
-    setTextInput('')
-    setIsCompleted(false)
-  }
-
-  if (isCompleted) {
-    return (
-      <div className="min-h-screen bg-gradient-to-br from-purple-50 via-white to-blue-50">
-        <div className="fixed top-0 left-0 right-0 h-1">
-          <Progress value={progress} className="h-full" />
-        </div>
-        
-        <div className="container mx-auto px-4 py-20 max-w-2xl">
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            className="text-center space-y-8"
-          >
-            <div className="flex justify-center">
-              <CheckCircle className="w-20 h-20 text-purple-600" />
-            </div>
-            <h2 className="text-4xl font-bold text-gray-900">
-              Thank you for completing the survey!
-            </h2>
-            <p className="text-xl text-gray-600">
-              Your responses have been recorded.
-            </p>
-            <Button 
-              onClick={handleReset}
-              className="mt-8 bg-purple-600 hover:bg-purple-700 text-white px-8 py-6 text-lg rounded-full"
-            >
-              Start Over
-            </Button>
-          </motion.div>
-        </div>
-
-        <div className="fixed bottom-8 left-0 right-0 flex justify-center gap-4">
-          <Button
-            variant="outline"
-            onClick={handlePrevious}
-            className="rounded-full"
-          >
-            <ChevronUp className="w-6 h-6" />
-          </Button>
-        </div>
-      </div>
-    )
+    setCurrentQuestionIndex(prev => Math.min(prev + 1, sampleQuestions.length - 1))
   }
 
   return (
@@ -166,7 +97,7 @@ function App() {
                   disabled={!textInput.trim()}
                   className="mt-4 bg-purple-600 hover:bg-purple-700 text-white px-8 py-6 text-lg rounded-full"
                 >
-                  {currentQuestionIndex === sampleQuestions.length - 1 ? 'Complete ✨' : 'Press Enter ↵'}
+                  Press Enter ↵
                 </Button>
               </div>
             ) : (
@@ -175,7 +106,7 @@ function App() {
                   <Button
                     key={choice}
                     onClick={() => handleChoice(choice)}
-                    className="w-full text-left px-6 py-8 text-lg bg-white hover:bg-purple-50 border-2 border-gray-100 hover:border-purple-200 rounded-xl transition-all duration-200"
+                    className="w-full text-left px-6 py-8 text-lg bg-white hover:bg-purple-50 border-2 border-gray-100 hover:border-purple-200 rounded-xl transition-all duration-200 text-gray-900 font-medium"
                   >
                     {choice}
                   </Button>

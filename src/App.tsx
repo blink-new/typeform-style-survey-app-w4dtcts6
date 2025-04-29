@@ -1,7 +1,7 @@
 
 import { useState } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
-import { ChevronDown, ChevronUp } from 'lucide-react'
+import { ChevronDown, ChevronUp, CheckCircle } from 'lucide-react'
 import { Button } from './components/ui/button'
 import { Progress } from './components/ui/progress'
 import './App.css'
@@ -36,19 +36,36 @@ function App() {
   const [currentQuestionIndex, setCurrentQuestionIndex] = useState(0)
   const [answers, setAnswers] = useState<Record<number, string>>({})
   const [textInput, setTextInput] = useState('')
+  const [isCompleted, setIsCompleted] = useState(false)
 
   const currentQuestion = sampleQuestions[currentQuestionIndex]
-  const progress = ((currentQuestionIndex) / sampleQuestions.length) * 100
+  const progress = isCompleted ? 100 : ((currentQuestionIndex) / sampleQuestions.length) * 100
+  const isLastQuestion = currentQuestionIndex === sampleQuestions.length - 1
+
+  const handleComplete = () => {
+    if (textInput.trim()) {
+      setAnswers(prev => ({ ...prev, [currentQuestion.id]: textInput }))
+      setIsCompleted(true)
+    }
+  }
 
   const handleNext = () => {
     if (textInput.trim()) {
-      setAnswers(prev => ({ ...prev, [currentQuestion.id]: textInput }))
-      setTextInput('')
-      setCurrentQuestionIndex(prev => Math.min(prev + 1, sampleQuestions.length - 1))
+      if (isLastQuestion) {
+        handleComplete()
+      } else {
+        setAnswers(prev => ({ ...prev, [currentQuestion.id]: textInput }))
+        setTextInput('')
+        setCurrentQuestionIndex(prev => prev + 1)
+      }
     }
   }
 
   const handlePrevious = () => {
+    if (isCompleted) {
+      setIsCompleted(false)
+      return
+    }
     setCurrentQuestionIndex(prev => Math.max(prev - 1, 0))
     const previousAnswer = answers[sampleQuestions[currentQuestionIndex - 1]?.id]
     if (previousAnswer) {
@@ -58,7 +75,47 @@ function App() {
 
   const handleChoice = (choice: string) => {
     setAnswers(prev => ({ ...prev, [currentQuestion.id]: choice }))
-    setCurrentQuestionIndex(prev => Math.min(prev + 1, sampleQuestions.length - 1))
+    if (isLastQuestion) {
+      setIsCompleted(true)
+    } else {
+      setCurrentQuestionIndex(prev => prev + 1)
+    }
+  }
+
+  const handleStartOver = () => {
+    setCurrentQuestionIndex(0)
+    setAnswers({})
+    setTextInput('')
+    setIsCompleted(false)
+  }
+
+  if (isCompleted) {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-purple-50 via-white to-blue-50">
+        <div className="fixed top-0 left-0 right-0 h-1">
+          <Progress value={100} className="h-full" />
+        </div>
+        <div className="container mx-auto px-4 py-20 max-w-2xl">
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            className="text-center space-y-8"
+          >
+            <CheckCircle className="w-20 h-20 mx-auto text-purple-600" />
+            <h2 className="text-4xl font-bold text-gray-900">Thank you!</h2>
+            <p className="text-xl text-gray-600">Your responses have been recorded.</p>
+            <div className="space-x-4">
+              <Button onClick={handlePrevious} variant="outline" className="rounded-full">
+                Review Answers
+              </Button>
+              <Button onClick={handleStartOver} className="rounded-full bg-purple-600">
+                Start Over
+              </Button>
+            </div>
+          </motion.div>
+        </div>
+      </div>
+    )
   }
 
   return (
@@ -97,7 +154,7 @@ function App() {
                   disabled={!textInput.trim()}
                   className="mt-4 bg-purple-600 hover:bg-purple-700 text-white px-8 py-6 text-lg rounded-full"
                 >
-                  Press Enter ↵
+                  {isLastQuestion ? 'Complete ✨' : 'Press Enter ↵'}
                 </Button>
               </div>
             ) : (
@@ -127,8 +184,8 @@ function App() {
           </Button>
           <Button
             variant="outline"
-            onClick={() => setCurrentQuestionIndex(prev => Math.min(prev + 1, sampleQuestions.length - 1))}
-            disabled={currentQuestionIndex === sampleQuestions.length - 1}
+            onClick={handleNext}
+            disabled={currentQuestionIndex === sampleQuestions.length - 1 || !textInput.trim()}
             className="rounded-full"
           >
             <ChevronDown className="w-6 h-6" />

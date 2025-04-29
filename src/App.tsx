@@ -1,7 +1,7 @@
 
 import { useState } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
-import { ChevronDown, ChevronUp, CheckCircle } from 'lucide-react'
+import { ChevronDown, ChevronUp } from 'lucide-react'
 import { Button } from './components/ui/button'
 import { Progress } from './components/ui/progress'
 import './App.css'
@@ -39,23 +39,16 @@ function App() {
   const [isCompleted, setIsCompleted] = useState(false)
 
   const currentQuestion = sampleQuestions[currentQuestionIndex]
-  const progress = isCompleted ? 100 : ((currentQuestionIndex) / sampleQuestions.length) * 100
+  const progress = (currentQuestionIndex / sampleQuestions.length) * 100
   const isLastQuestion = currentQuestionIndex === sampleQuestions.length - 1
-
-  const handleComplete = () => {
-    if (textInput.trim()) {
-      setAnswers(prev => ({ ...prev, [currentQuestion.id]: textInput }))
-      setIsCompleted(true)
-    }
-  }
 
   const handleNext = () => {
     if (textInput.trim()) {
+      setAnswers(prev => ({ ...prev, [currentQuestion.id]: textInput }))
+      setTextInput('')
       if (isLastQuestion) {
-        handleComplete()
+        setIsCompleted(true)
       } else {
-        setAnswers(prev => ({ ...prev, [currentQuestion.id]: textInput }))
-        setTextInput('')
         setCurrentQuestionIndex(prev => prev + 1)
       }
     }
@@ -64,12 +57,12 @@ function App() {
   const handlePrevious = () => {
     if (isCompleted) {
       setIsCompleted(false)
-      return
-    }
-    setCurrentQuestionIndex(prev => Math.max(prev - 1, 0))
-    const previousAnswer = answers[sampleQuestions[currentQuestionIndex - 1]?.id]
-    if (previousAnswer) {
-      setTextInput(previousAnswer)
+    } else {
+      setCurrentQuestionIndex(prev => Math.max(prev - 1, 0))
+      const previousAnswer = answers[sampleQuestions[currentQuestionIndex - 1]?.id]
+      if (previousAnswer) {
+        setTextInput(previousAnswer)
+      }
     }
   }
 
@@ -95,24 +88,32 @@ function App() {
         <div className="fixed top-0 left-0 right-0 h-1">
           <Progress value={100} className="h-full" />
         </div>
-        <div className="container mx-auto px-4 py-20 max-w-2xl">
+        <div className="container mx-auto px-4 py-20 max-w-2xl text-center">
           <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            className="text-center space-y-8"
+            initial={{ scale: 0 }}
+            animate={{ scale: 1 }}
+            transition={{ type: "spring", duration: 0.5 }}
+            className="text-6xl mb-8"
           >
-            <CheckCircle className="w-20 h-20 mx-auto text-purple-600" />
-            <h2 className="text-4xl font-bold text-gray-900">Thank you!</h2>
-            <p className="text-xl text-gray-600">Your responses have been recorded.</p>
-            <div className="space-x-4">
-              <Button onClick={handlePrevious} variant="outline" className="rounded-full">
-                Review Answers
-              </Button>
-              <Button onClick={handleStartOver} className="rounded-full bg-purple-600">
-                Start Over
-              </Button>
-            </div>
+            ✨
           </motion.div>
+          <h2 className="text-4xl font-bold text-gray-900 mb-4">Thanks for completing the survey!</h2>
+          <p className="text-xl text-gray-600 mb-8">Your responses have been recorded.</p>
+          <div className="space-x-4">
+            <Button
+              onClick={handlePrevious}
+              className="bg-purple-600 hover:bg-purple-700 text-white px-6 py-2"
+            >
+              Review Answers
+            </Button>
+            <Button
+              onClick={handleStartOver}
+              variant="outline"
+              className="px-6 py-2"
+            >
+              Start Over
+            </Button>
+          </div>
         </div>
       </div>
     )
@@ -154,7 +155,7 @@ function App() {
                   disabled={!textInput.trim()}
                   className="mt-4 bg-purple-600 hover:bg-purple-700 text-white px-8 py-6 text-lg rounded-full"
                 >
-                  {isLastQuestion ? 'Complete ✨' : 'Press Enter ↵'}
+                  {isLastQuestion ? 'Submit' : 'Press Enter ↵'}
                 </Button>
               </div>
             ) : (
@@ -184,8 +185,8 @@ function App() {
           </Button>
           <Button
             variant="outline"
-            onClick={handleNext}
-            disabled={currentQuestionIndex === sampleQuestions.length - 1 || !textInput.trim()}
+            onClick={() => setCurrentQuestionIndex(prev => Math.min(prev + 1, sampleQuestions.length - 1))}
+            disabled={currentQuestionIndex === sampleQuestions.length - 1}
             className="rounded-full"
           >
             <ChevronDown className="w-6 h-6" />
